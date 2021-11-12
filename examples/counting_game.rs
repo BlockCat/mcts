@@ -4,7 +4,7 @@ use mcts::*;
 use mcts::tree_policy::*;
 use mcts::transposition_table::*;
 
-#[derive(Clone)]
+#[derive(Clone, Hash)]
 struct CountingGame(i64);
 
 #[derive(Clone, Debug)]
@@ -35,12 +35,6 @@ impl GameState for CountingGame {
             Move::Add => self.0 += 1,
             Move::Sub => self.0 -= 1,
         }
-    }
-}
-
-impl TranspositionHash for CountingGame {
-    fn hash(&self) -> u64 {
-        self.0 as u64
     }
 }
 

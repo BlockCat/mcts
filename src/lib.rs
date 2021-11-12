@@ -13,7 +13,7 @@
 //! //
 //! // The best strategy is to increase the number at every step.
 //!
-//! #[derive(Clone, Debug, PartialEq)]
+//! #[derive(Clone, Debug, PartialEq, Hash)]
 //! struct CountingGame(i64);
 //!
 //! #[derive(Clone, Debug, PartialEq)]
@@ -42,12 +42,6 @@
 //!             Move::Add => self.0 += 1,
 //!             Move::Sub => self.0 -= 1,
 //!         }
-//!     }
-//! }
-//!
-//! impl TranspositionHash for CountingGame {
-//!     fn hash(&self) -> u64 {
-//!         self.0 as u64
 //!     }
 //! }
 //!
