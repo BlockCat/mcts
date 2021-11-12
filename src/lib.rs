@@ -114,7 +114,7 @@ use std::sync::Arc;
 use std::thread::JoinHandle;
 use std::time::Duration;
 
-pub trait MCTS: Sized + Sync {
+pub trait MCTS: Sized {
     type State: GameState + Sync;
     type Eval: Evaluator<Self>;
     type TreePolicy: TreePolicy<Self>;
@@ -218,7 +218,7 @@ pub struct MCTSManager<Spec: MCTS> {
     print_on_playout_error: bool,
 }
 
-impl<Spec: MCTS> MCTSManager<Spec>
+impl<Spec: MCTS + Sync> MCTSManager<Spec>
 where
     ThreadData<Spec>: Default,
     Spec::Eval: Sync

@@ -8,6 +8,7 @@ readme = "README.md"
 keywords = ["monte", "carlo", "tree", "search", "ai"]
 categories = ["algorithms"]
 license = "MIT"
+edition = "2018"
 
 [dependencies]
 crossbeam = "0.3"
