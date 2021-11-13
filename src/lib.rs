@@ -221,7 +221,7 @@ pub struct MCTSManager<Spec: MCTS> {
 impl<Spec: MCTS + Sync> MCTSManager<Spec>
 where
     ThreadData<Spec>: Default,
-    Spec::Eval: Sync
+    Spec::Eval: Sync,
 {
     unsafe fn spawn_worker_thread(&self, stop_signal: Arc<AtomicBool>) -> JoinHandle<()> {
         let search_tree = &self.search_tree;

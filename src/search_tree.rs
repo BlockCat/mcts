@@ -29,6 +29,7 @@ pub struct SearchTree<Spec: MCTS> {
     expansion_contention_events: AtomicUsize,
 }
 
+#[derive(Debug)]
 struct NodeStats {
     visits: AtomicUsize,
     sum_evaluations: AtomicI64,
@@ -144,7 +145,15 @@ where
                 if self.visits() == 1 { "" } else { "s" },
                 self.sum_rewards() as f64 / self.visits() as f64,
                 own_str
-            )
+            )?;
+            if let Some(h) = self.child() {
+                for m in h.moves() {
+                    write!(f, "\n {:?}", m.stats)?;
+                }
+                write!(f, "\n")?;
+            }
+
+            Ok(())
         }
     }
 }
@@ -240,7 +249,7 @@ impl<Spec: MCTS> SearchTree<Spec> {
         let mut did_we_create = false;
         let mut node = &self.root_node;
         loop {
-            if node.moves.len() == 0 {
+            if node.moves.is_empty() {
                 break;
             }
             if path.len() >= self.manager.max_playout_length() {
@@ -295,7 +304,9 @@ impl<Spec: MCTS> SearchTree<Spec> {
                 self.make_handle(node, tld),
             ))
         };
+
         let evaln = new_evaln.as_ref().unwrap_or(&node.evaln);
+
         self.finish_playout(&path, &node_path, &players, tld, evaln);
         true
     }
@@ -315,12 +326,15 @@ impl<Spec: MCTS> SearchTree<Spec> {
             .table
             .lookup(state, self.make_handle(current_node, tld))
         {
-            let child = choice.child.compare_exchange(
-                null_mut(),
-                node as *const _ as *mut _,
-                Ordering::Relaxed,
-                Ordering::Relaxed
-            ).unwrap_or_else(|x| x) as *const _;
+            let child = choice
+                .child
+                .compare_exchange(
+                    null_mut(),
+                    node as *const _ as *mut _,
+                    Ordering::Relaxed,
+                    Ordering::Relaxed,
+                )
+                .unwrap_or_else(|x| x) as *const _;
             if child == null() {
                 self.transposition_table_hits
                     .fetch_add(1, Ordering::Relaxed);
@@ -336,12 +350,10 @@ impl<Spec: MCTS> SearchTree<Spec> {
             Some(self.make_handle(current_node, tld)),
         );
         let created = Box::into_raw(Box::new(created));
-        let other_child = choice.child.compare_exchange(
-            null_mut(),
-            created,
-            Ordering::Relaxed,
-            Ordering::Relaxed,
-        ).unwrap_or_else(|x| x);
+        let other_child = choice
+            .child
+            .compare_exchange(null_mut(), created, Ordering::Relaxed, Ordering::Relaxed)
+            .unwrap_or_else(|x| x);
         if other_child != null_mut() {
             self.expansion_contention_events
                 .fetch_add(1, Ordering::Relaxed);
