@@ -32,7 +32,7 @@ pub struct SearchTree<Spec: MCTS> {
 #[derive(Debug)]
 struct NodeStats {
     visits: AtomicUsize,
-    sum_evaluations: AtomicI64,
+    sum_evaluations: AtomicF64,
 }
 
 pub struct MoveInfo<Spec: MCTS> {
@@ -560,19 +560,19 @@ impl<'a, Spec: MCTS> SearchHandle<'a, Spec> {
 impl NodeStats {
     fn new() -> Self {
         NodeStats {
-            sum_evaluations: AtomicI64::new(0),
+            sum_evaluations: AtomicF64::new(0.0),
             visits: AtomicUsize::new(0),
         }
     }
     fn down<Spec: MCTS>(&self, manager: &Spec) {
         self.sum_evaluations
-            .fetch_sub(manager.virtual_loss() as FakeI64, Ordering::Relaxed);
+            .fetch_sub(manager.virtual_loss(), Ordering::Relaxed);
         self.visits.fetch_add(1, Ordering::Relaxed);
     }
-    fn up<Spec: MCTS>(&self, manager: &Spec, evaln: i64) {
+    fn up<Spec: MCTS>(&self, manager: &Spec, evaln: f64) {
         let delta = evaln + manager.virtual_loss();
         self.sum_evaluations
-            .fetch_add(delta as FakeI64, Ordering::Relaxed);
+            .fetch_add(delta, Ordering::Relaxed);
     }
     fn replace(&self, other: &NodeStats) {
         self.visits

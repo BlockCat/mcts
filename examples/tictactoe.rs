@@ -196,11 +196,11 @@ impl Evaluator<MyMCTS> for MyEvaluator {
         &self,
         evaln: &StateEval,
         player: &mcts::Player<MyMCTS>,
-    ) -> i64 {
+    ) -> f64 {
         match evaln {
-            StateEval::Winner(winner) if winner == player => 1,
-            StateEval::Winner(_) => -1 as i64,
-            StateEval::Draw => 0,
+            StateEval::Winner(winner) if winner == player => 1.0,
+            StateEval::Winner(_) => -1.0,
+            StateEval::Draw => 0.0,
         }
     }
 }

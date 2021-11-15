@@ -55,8 +55,8 @@
 //!         -> (Vec<()>, i64) {
 //!         (vec![(); moves.len()], state.0)
 //!     }
-//!     fn interpret_evaluation_for_player(&self, evaln: &i64, _player: &()) -> i64 {
-//!         *evaln
+//!     fn interpret_evaluation_for_player(&self, evaln: &i64, _player: &()) -> f64 {
+//!         *evaln as f64
 //!     }
 //!     fn evaluate_existing_state(&self, _: &CountingGame,  evaln: &i64, _: SearchHandle<MyMCTS>) -> i64 {
 //!         *evaln
@@ -122,8 +122,8 @@ pub trait MCTS: Sized {
     type TranspositionTable: TranspositionTable<Self>;
     type ExtraThreadData;
 
-    fn virtual_loss(&self) -> i64 {
-        0
+    fn virtual_loss(&self) -> f64 {
+        0.0
     }
     fn visits_before_expansion(&self) -> u64 {
         1
@@ -208,7 +208,7 @@ pub trait Evaluator<Spec: MCTS> {
         &self,
         evaluation: &Self::StateEvaluation,
         player: &Player<Spec>,
-    ) -> i64;
+    ) -> f64;
 }
 
 pub struct MCTSManager<Spec: MCTS> {

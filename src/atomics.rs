@@ -8,6 +8,8 @@ pub type AtomicI64 = std::sync::atomic::AtomicIsize;
 #[cfg(not(target_pointer_width = "64"))]
 pub type AtomicI64 = std::sync::atomic::AtomicI64;
 
+pub type AtomicF64 = atomic_float::AtomicF64;
+
 #[cfg(target_pointer_width = "64")]
 pub type AtomicU64 = std::sync::atomic::AtomicUsize;
 #[cfg(not(target_pointer_width = "64"))]

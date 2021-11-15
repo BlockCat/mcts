@@ -52,8 +52,8 @@ impl Evaluator<MyMCTS> for MyEvaluator {
         (vec![(); moves.len()], state.0)
     }
 
-    fn interpret_evaluation_for_player(&self, evaln: &i64, _player: &()) -> i64 {
-        *evaln
+    fn interpret_evaluation_for_player(&self, evaln: &i64, _player: &()) -> f64 {
+        *evaln as f64
     }
 
     fn evaluate_existing_state(
@@ -77,8 +77,8 @@ impl MCTS for MyMCTS {
     type TreePolicy = UCTPolicy;
     type TranspositionTable = ();
 
-    fn virtual_loss(&self) -> i64 {
-        500
+    fn virtual_loss(&self) -> f64 {
+        500.0
     }
 }
 
