@@ -74,7 +74,7 @@ impl MCTS for MyMCTS {
     type Eval = MyEvaluator;
     type NodeData = ();
     type ExtraThreadData = ();
-    type TreePolicy = UCTPolicy;
+    type TreePolicy = UCTPolicy<()>;
     type TranspositionTable = ();
 
     fn virtual_loss(&self) -> f64 {

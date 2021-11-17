@@ -211,7 +211,7 @@ struct MyMCTS;
 impl MCTS for MyMCTS {
     type State = TicTacToeState;
     type Eval = MyEvaluator;
-    type TreePolicy = UCTPolicy;
+    type TreePolicy = UCTPolicy<()>;
     type NodeData = ();
     type TranspositionTable = ApproxTable<Self>;
     type ExtraThreadData = ();

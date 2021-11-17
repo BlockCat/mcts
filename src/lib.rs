@@ -360,7 +360,7 @@ where
             self.playout();
         }
     }
-    pub fn playout_n(&mut self, n: u64) {
+    pub fn playout_n(&mut self, n: usize) {
         for _ in 0..n {
             self.playout();
         }

@@ -3,7 +3,7 @@ use self::rand::{Rng, SeedableRng, XorShiftRng};
 
 use super::*;
 use search_tree::*;
-use std;
+use std::{self, marker::PhantomData};
 
 pub trait TreePolicy<Spec: MCTS<TreePolicy = Self>>: Sync + Sized {
     type MoveEvaluation: Sync + Send;
@@ -20,11 +20,12 @@ pub trait TreePolicy<Spec: MCTS<TreePolicy = Self>>: Sync + Sized {
 }
 
 #[derive(Clone, Debug)]
-pub struct UCTPolicy {
+pub struct UCTPolicy<MV> {
     exploration_constant: f64,
+    _phantom: PhantomData<MV>,
 }
 
-impl UCTPolicy {
+impl<MV> UCTPolicy<MV> {
     pub fn new(exploration_constant: f64) -> Self {
         assert!(
             exploration_constant > 0.0,
@@ -33,6 +34,7 @@ impl UCTPolicy {
         );
         Self {
             exploration_constant,
+            _phantom: Default::default(),
         }
     }
 
@@ -78,9 +80,9 @@ impl AlphaGoPolicy {
     }
 }
 
-impl<Spec: MCTS<TreePolicy = Self>> TreePolicy<Spec> for UCTPolicy {
+impl<Spec: MCTS<TreePolicy = Self>, MV: Send + Sync> TreePolicy<Spec> for UCTPolicy<MV> {
     type ThreadLocalData = PolicyRng;
-    type MoveEvaluation = ();
+    type MoveEvaluation = MV;
 
     fn choose_child<'a, MoveIter>(
         &self,
@@ -127,6 +129,7 @@ impl<Spec: MCTS<TreePolicy = Self>> TreePolicy<Spec> for AlphaGoPolicy {
         let total_visits = moves.clone().map(|x| x.visits()).sum::<u64>() + 1;
         let sqrt_total_visits = (total_visits as f64).sqrt();
         let explore_coef = self.exploration_constant * sqrt_total_visits;
+
         handle
             .thread_data()
             .policy_data
@@ -134,6 +137,7 @@ impl<Spec: MCTS<TreePolicy = Self>> TreePolicy<Spec> for AlphaGoPolicy {
                 let sum_rewards = mov.sum_rewards() as f64;
                 let child_visits = mov.visits();
                 let policy_evaln = *mov.move_evaluation() as f64;
+
                 (sum_rewards + explore_coef * policy_evaln) * self.reciprocal(child_visits as usize)
             })
             .unwrap()
