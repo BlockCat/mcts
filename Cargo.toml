@@ -13,5 +13,5 @@ edition = "2018"
 [dependencies]
 atomic_float = "0.1.0"
 crossbeam = "0.3"
-rand = "0.4"
+rand = "0.8.4"
 smallvec = "0.6"

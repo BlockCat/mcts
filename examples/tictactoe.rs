@@ -3,6 +3,7 @@ use std::fmt::Display;
 use mcts::transposition_table::*;
 use mcts::tree_policy::*;
 use mcts::*;
+use rand::prelude::SliceRandom;
 
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Hash)]
 pub enum Player {
@@ -169,10 +170,10 @@ impl Evaluator<MyMCTS> for MyEvaluator {
         let mut node = state.clone();
         let mut rand = rand::thread_rng();
         while !node.is_terminal() {
-            let random = rand::seq::sample_iter(&mut rand, node.available_moves(), 1)
-                .expect("Could not sample random moves");
-            let action = &random[0];
-            node.make_move(action);
+            let moves = node.available_moves();
+            let random = moves.choose(&mut rand)
+                .expect("Could not sample random moves");            
+            node.make_move(random);
         }
 
         let state = match node.get_winner() {

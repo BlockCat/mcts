@@ -1,13 +1,14 @@
 extern crate rand;
-use self::rand::{Rng, SeedableRng, XorShiftRng};
+use self::rand::{prelude::ThreadRng, Rng, SeedableRng};
 
 use super::*;
+use rand::prelude::StdRng;
 use search_tree::*;
 use std::{self, marker::PhantomData};
 
 pub trait TreePolicy<Spec: MCTS<TreePolicy = Self>>: Sync + Sized {
     type MoveEvaluation: Sync + Send;
-    type ThreadLocalData: Default;
+    type ThreadLocalData: Default + SelectionRng;
 
     fn choose_child<'a, MoveIter>(
         &self,
@@ -115,7 +116,7 @@ impl<Spec: MCTS<TreePolicy = Self>, MV: Send + Sync> TreePolicy<Spec> for UCTPol
 }
 
 impl<Spec: MCTS<TreePolicy = Self>> TreePolicy<Spec> for AlphaGoPolicy {
-    type ThreadLocalData = PolicyRng;
+    type ThreadLocalData = WeightedRng;
     type MoveEvaluation = f64;
 
     fn choose_child<'a, MoveIter>(
@@ -162,21 +163,44 @@ impl<Spec: MCTS<TreePolicy = Self>> TreePolicy<Spec> for AlphaGoPolicy {
     }
 }
 
+pub trait SelectionRng {
+    fn select_by_key<T, Iter, KeyFn>(&mut self, elts: Iter, key_fn: KeyFn) -> Option<T>
+    where
+        Iter: Iterator<Item = T>,
+        KeyFn: Fn(&T) -> f64,
+        T: Clone;
+}
+
+#[derive(Clone)]
+pub struct WeightedRng {
+    rng: StdRng,
+}
+
 #[derive(Clone)]
 pub struct PolicyRng {
-    rng: XorShiftRng,
+    rng: StdRng,
 }
 
 impl PolicyRng {
     pub fn new() -> Self {
-        let rng = SeedableRng::from_seed([1, 2, 3, 4]);
+        let rng = SeedableRng::seed_from_u64(1234);
         Self { rng }
     }
+}
 
-    pub fn select_by_key<T, Iter, KeyFn>(&mut self, elts: Iter, mut key_fn: KeyFn) -> Option<T>
+impl WeightedRng {
+    pub fn new() -> Self {
+        let rng = SeedableRng::seed_from_u64(1234);
+        Self { rng }
+    }
+}
+
+impl SelectionRng for PolicyRng {
+    fn select_by_key<T, Iter, KeyFn>(&mut self, elts: Iter, key_fn: KeyFn) -> Option<T>
     where
         Iter: Iterator<Item = T>,
-        KeyFn: FnMut(&T) -> f64,
+        KeyFn: Fn(&T) -> f64,
+        T: Clone,
     {
         let mut choice = None;
         let mut num_optimal: u32 = 0;
@@ -189,12 +213,35 @@ impl PolicyRng {
                 best_so_far = score;
             } else if score == best_so_far {
                 num_optimal += 1;
-                if self.rng.gen_weighted_bool(num_optimal) {
+                if self.rng.gen_bool(1.0 / (num_optimal as f64)) {
                     choice = Some(elt);
                 }
             }
         }
         choice
+    }
+}
+
+impl SelectionRng for WeightedRng {
+    fn select_by_key<T, Iter, KeyFn>(&mut self, elts: Iter, key_fn: KeyFn) -> Option<T>
+    where
+        Iter: Iterator<Item = T>,
+        KeyFn: Fn(&T) -> f64,
+        T: Clone,
+    {
+        use rand::seq::SliceRandom;
+
+        let options = elts.collect::<Vec<_>>();
+
+        let a = options.choose_weighted(&mut self.rng, key_fn).ok()?;
+
+        Some(a.clone())
+    }
+}
+
+impl Default for WeightedRng {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
