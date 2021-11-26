@@ -84,8 +84,12 @@ impl<Spec: MCTS> MoveInfo<Spec> {
         self.stats.visits.load(Ordering::Relaxed) as u64
     }
 
-    pub fn sum_rewards(&self) -> i64 {
-        self.stats.sum_evaluations.load(Ordering::Relaxed) as i64
+    pub fn sum_rewards(&self) -> f64 {
+        self.stats.sum_evaluations.load(Ordering::Relaxed) as f64
+    }
+
+    pub fn avg_reward(&self) -> f64 {
+        self.sum_rewards() / self.visits() as f64
     }
 
     pub fn child(&self) -> Option<NodeHandle<Spec>> {
@@ -117,7 +121,7 @@ where
                 self.mov,
                 self.visits(),
                 if self.visits() == 1 { "" } else { "s" },
-                self.sum_rewards() as f64 / self.visits() as f64,
+                self.avg_reward(),
                 own_str
             )
         }
@@ -143,16 +147,9 @@ where
                 self.mov,
                 self.visits(),
                 if self.visits() == 1 { "" } else { "s" },
-                self.sum_rewards() as f64 / self.visits() as f64,
+                self.avg_reward(),
                 own_str
             )?;
-            if let Some(h) = self.child() {
-                for m in h.moves() {
-                    write!(f, "\n {:?}", m.stats)?;
-                }
-                write!(f, "\n")?;
-            }
-
             Ok(())
         }
     }
@@ -486,6 +483,13 @@ where
         moves.sort_by_key(|x| -(x.visits() as i64));
         for mov in moves {
             println!("{:?}", mov);
+            if let Some(child) = mov.child() {
+                let mut child_moves = child.moves().collect::<Vec<_>>();
+                child_moves.sort_by_key(|x| -(x.visits() as i64));
+                for cmov in child_moves {
+                    println!("    {:?}", cmov);
+                }
+            }
         }
     }
 }

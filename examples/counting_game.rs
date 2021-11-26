@@ -3,7 +3,7 @@ extern crate mcts;
 use mcts::tree_policy::*;
 use mcts::*;
 
-#[derive(Clone, Hash)]
+#[derive(Clone, Hash, Default)]
 struct CountingGame(i64);
 
 #[derive(Clone, Debug)]
@@ -34,6 +34,15 @@ impl GameState for CountingGame {
         match *mov {
             Move::Add => self.0 += 1,
             Move::Sub => self.0 -= 1,
+        }
+    }
+
+    fn get_winner(&self) -> Option<Self::Player> {
+        let x = self.0;
+        if x == 100 {
+            Some(())
+        } else {
+            None
         }
     }
 }

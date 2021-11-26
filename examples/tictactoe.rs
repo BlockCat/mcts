@@ -73,49 +73,6 @@ impl Display for TicTacToeState {
     }
 }
 
-impl TicTacToeState {
-    pub fn is_terminal(&self) -> bool {
-        if let Some(_) = self.get_winner() {
-            true
-        } else {
-            self.board
-                .iter()
-                .flat_map(|r| r.iter())
-                .all(|x| x.is_some())
-        }
-    }
-
-    pub fn get_winner(&self) -> Option<Player> {
-        for line in &[
-            // Rows
-            [(0, 0), (1, 0), (2, 0)],
-            [(0, 1), (1, 1), (2, 1)],
-            [(0, 2), (1, 2), (2, 2)],
-            // Cols
-            [(0, 0), (0, 1), (0, 2)],
-            [(1, 0), (1, 1), (1, 2)],
-            [(2, 0), (2, 1), (2, 2)],
-            // Diags
-            [(0, 0), (1, 1), (2, 2)],
-            [(2, 0), (1, 1), (0, 2)],
-        ] {
-            if line
-                .into_iter()
-                .all(|&(x, y)| self.board[y][x] == Some(Player::Player1))
-            {
-                return Some(Player::Player1);
-            }
-            if line
-                .into_iter()
-                .all(|&(x, y)| self.board[y][x] == Some(Player::Player2))
-            {
-                return Some(Player::Player2);
-            }
-        }
-        None
-    }
-}
-
 impl GameState for TicTacToeState {
     type Move = TicTacToeAction;
     type Player = Player;
@@ -149,6 +106,47 @@ impl GameState for TicTacToeState {
         self.board[mov.y][mov.x] = Some(self.current_player());
         self.current_player = self.current_player.other();
     }
+
+    fn is_terminal(&self) -> bool {
+        if let Some(_) = self.get_winner() {
+            true
+        } else {
+            self.board
+                .iter()
+                .flat_map(|r| r.iter())
+                .all(|x| x.is_some())
+        }
+    }
+
+    fn get_winner(&self) -> Option<Self::Player> {
+        for line in &[
+            // Rows
+            [(0, 0), (1, 0), (2, 0)],
+            [(0, 1), (1, 1), (2, 1)],
+            [(0, 2), (1, 2), (2, 2)],
+            // Cols
+            [(0, 0), (0, 1), (0, 2)],
+            [(1, 0), (1, 1), (1, 2)],
+            [(2, 0), (2, 1), (2, 2)],
+            // Diags
+            [(0, 0), (1, 1), (2, 2)],
+            [(2, 0), (1, 1), (0, 2)],
+        ] {
+            if line
+                .into_iter()
+                .all(|&(x, y)| self.board[y][x] == Some(Player::Player1))
+            {
+                return Some(Player::Player1);
+            }
+            if line
+                .into_iter()
+                .all(|&(x, y)| self.board[y][x] == Some(Player::Player2))
+            {
+                return Some(Player::Player2);
+            }
+        }
+        None
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -171,8 +169,9 @@ impl Evaluator<MyMCTS> for MyEvaluator {
         let mut rand = rand::thread_rng();
         while !node.is_terminal() {
             let moves = node.available_moves();
-            let random = moves.choose(&mut rand)
-                .expect("Could not sample random moves");            
+            let random = moves
+                .choose(&mut rand)
+                .expect("Could not sample random moves");
             node.make_move(random);
         }
 

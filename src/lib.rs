@@ -13,7 +13,7 @@
 //! //
 //! // The best strategy is to increase the number at every step.
 //!
-//! #[derive(Clone, Debug, PartialEq, Hash)]
+//! #[derive(Clone, Debug, Default, PartialEq, Hash)]
 //! struct CountingGame(i64);
 //!
 //! #[derive(Clone, Debug, PartialEq)]
@@ -41,6 +41,14 @@
 //!         match *mov {
 //!             Move::Add => self.0 += 1,
 //!             Move::Sub => self.0 -= 1,
+//!         }
+//!     }
+//!     fn get_winner(&self) -> Option<Self::Player> {
+//!         let x = self.0;
+//!         if x == 100 {
+//!             Some(())
+//!         } else {
+//!             None
 //!         }
 //!     }
 //! }
@@ -71,7 +79,7 @@
 //!     type Eval = MyEvaluator;
 //!     type NodeData = ();
 //!     type ExtraThreadData = ();
-//!     type TreePolicy = UCTPolicy;
+//!     type TreePolicy = UCTPolicy<()>;
 //!     type TranspositionTable = ApproxTable<Self>;
 //!
 //!     fn cycle_behaviour(&self) -> CycleBehaviour<Self> {
@@ -110,12 +118,13 @@ use transposition_table::*;
 use tree_policy::*;
 
 use atomics::*;
+use std::fmt::Debug;
 use std::sync::Arc;
 use std::thread::JoinHandle;
 use std::time::Duration;
 
 pub trait MCTS: Sized {
-    type State: GameState + Sync;
+    type State: GameState + Default + Sync;
     type Eval: Evaluator<Self>;
     type TreePolicy: TreePolicy<Self>;
     type NodeData: Default + Sync + Send;
@@ -179,16 +188,20 @@ pub type TreePolicyThreadData<Spec> =
 
 pub trait GameState: Clone {
     type Move: Sync + Send + Clone;
-    type Player: Sync;
+    type Player: Sync + Send + Clone + PartialEq;
     type MoveList: std::iter::IntoIterator<Item = Self::Move>;
 
     fn current_player(&self) -> Self::Player;
     fn available_moves(&self) -> Self::MoveList;
     fn make_move(&mut self, mov: &Self::Move);
+    fn get_winner(&self) -> Option<Self::Player>;
+    fn is_terminal(&self) -> bool {
+        self.available_moves().into_iter().next().is_none()
+    }
 }
 
 pub trait Evaluator<Spec: MCTS> {
-    type StateEvaluation: Sync + Send;
+    type StateEvaluation: Sync + Send + Clone;
 
     fn evaluate_new_state(
         &self,

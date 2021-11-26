@@ -116,7 +116,7 @@ impl<Spec: MCTS<TreePolicy = Self>, MV: Send + Sync> TreePolicy<Spec> for UCTPol
 }
 
 impl<Spec: MCTS<TreePolicy = Self>> TreePolicy<Spec> for AlphaGoPolicy {
-    type ThreadLocalData = WeightedRng;
+    type ThreadLocalData = PolicyRng;
     type MoveEvaluation = f64;
 
     fn choose_child<'a, MoveIter>(
@@ -182,15 +182,15 @@ pub struct PolicyRng {
 }
 
 impl PolicyRng {
-    pub fn new() -> Self {
-        let rng = SeedableRng::seed_from_u64(1234);
+    pub fn new(seed: u64) -> Self {
+        let rng = SeedableRng::seed_from_u64(seed);
         Self { rng }
     }
 }
 
 impl WeightedRng {
-    pub fn new() -> Self {
-        let rng = SeedableRng::seed_from_u64(1234);
+    pub fn new(seed: u64) -> Self {
+        let rng = SeedableRng::seed_from_u64(seed);
         Self { rng }
     }
 }
@@ -233,20 +233,36 @@ impl SelectionRng for WeightedRng {
 
         let options = elts.collect::<Vec<_>>();
 
-        let a = options.choose_weighted(&mut self.rng, key_fn).ok()?;
+        let minimal = options
+            .iter()
+            .map(&key_fn)
+            .min_by(|a, b| a.partial_cmp(b).unwrap())
+            .unwrap();
+        let minimal = if minimal < 0.0 { -minimal } else { 0.01 };
 
-        Some(a.clone())
+        options
+            .choose_weighted(&mut self.rng, |v| key_fn(v) + minimal)
+            .ok()
+            .or_else(|| {
+                println!(
+                    "No weighted found, {} moves found, choosing random. {:?}",
+                    options.len(),
+                    options.iter().map(&key_fn).collect::<Vec<_>>()
+                );
+                options.choose(&mut self.rng)
+            })
+            .cloned()
     }
 }
 
 impl Default for WeightedRng {
     fn default() -> Self {
-        Self::new()
+        Self::new(rand::random())
     }
 }
 
 impl Default for PolicyRng {
     fn default() -> Self {
-        Self::new()
+        Self::new(rand::random())
     }
 }
