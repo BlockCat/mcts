@@ -1,4 +1,7 @@
-use std::{collections::{HashMap, hash_map::DefaultHasher}, hash::{Hash, Hasher}};
+use std::{
+    collections::hash_map::DefaultHasher,
+    hash::{Hash, Hasher},
+};
 
 use super::*;
 use atomics::*;
@@ -120,7 +123,6 @@ impl<K: Hash, V> ApproxQuadraticProbingHashTable<K, V> {
 
 unsafe impl<K: Hash, V> Sync for ApproxQuadraticProbingHashTable<K, V> {}
 unsafe impl<K: Hash, V> Send for ApproxQuadraticProbingHashTable<K, V> {}
-
 
 pub type ApproxTable<Spec> =
     ApproxQuadraticProbingHashTable<<Spec as MCTS>::State, SearchNode<Spec>>;

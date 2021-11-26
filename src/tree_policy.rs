@@ -1,5 +1,5 @@
 extern crate rand;
-use self::rand::{prelude::ThreadRng, Rng, SeedableRng};
+use self::rand::{Rng, SeedableRng};
 
 use super::*;
 use rand::prelude::StdRng;
