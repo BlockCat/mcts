@@ -93,24 +93,25 @@ impl<Spec: MCTS<TreePolicy = Self>, MV: Send + Sync> TreePolicy<Spec> for UCTPol
     where
         MoveIter: Iterator<Item = &'a MoveInfo<Spec>> + Clone,
     {
-        let parent_visits = moves.clone().map(|x| x.visits()).sum::<u64>();
+        let snap_shot = moves.clone().map(|x| x.visits()).collect::<Vec<_>>();
+        let parent_visits = snap_shot.iter().sum::<u64>();
         handle
             .thread_data()
             .policy_data
-            .select_by_key(moves, |mov| {
+            .select_by_key(moves.zip(snap_shot), |(mov, child_visits)| {
                 let sum_rewards = mov.sum_rewards();
-                let child_visits = mov.visits();
                 // http://mcts.ai/pubs/mcts-survey-master.pdf
-                if child_visits == 0 {
+                if *child_visits == 0 {
                     std::f64::INFINITY
                 } else {
                     let parent_visits = parent_visits as f64;
-                    let child_visits = child_visits as f64;
+                    let child_visits = *child_visits as f64;
                     let explore_term = (parent_visits.ln() / child_visits).sqrt();
                     let mean_action_value = sum_rewards as f64 / child_visits;
                     self.exploration_constant * explore_term + mean_action_value
                 }
             })
+            .map(|x| x.0)
             .unwrap()
     }
 }
