@@ -30,11 +30,13 @@ impl GameState for CountingGame {
         }
     }
 
-    fn make_move(&mut self, mov: &Self::Move) {
+    fn make_move(&mut self, mov: &Self::Move) -> Result<(), ()> {
         match *mov {
             Move::Add => self.0 += 1,
             Move::Sub => self.0 -= 1,
         }
+
+        Ok(())
     }
 
     fn get_winner(&self) -> Option<Self::Player> {

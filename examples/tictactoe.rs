@@ -102,9 +102,11 @@ impl GameState for TicTacToeState {
         }
     }
 
-    fn make_move(&mut self, mov: &Self::Move) {
+    fn make_move(&mut self, mov: &Self::Move) -> Result<(), ()> {
         self.board[mov.y][mov.x] = Some(self.current_player());
         self.current_player = self.current_player.other();
+
+        Ok(())
     }
 
     fn is_terminal(&self) -> bool {
@@ -172,7 +174,7 @@ impl Evaluator<MyMCTS> for MyEvaluator {
             let random = moves
                 .choose(&mut rand)
                 .expect("Could not sample random moves");
-            node.make_move(random);
+            node.make_move(random).expect("Could not");
         }
 
         let state = match node.get_winner() {
@@ -234,14 +236,14 @@ where
 
     while !game.is_terminal() {
         let action = player_1(&game);
-        game.make_move(&action);
+        game.make_move(&action).expect("Could not make move");
         println!("{}", game);
         if game.is_terminal() {
             break;
         }
 
         let action = player_2(&game);
-        game.make_move(&action);
+        game.make_move(&action).expect("Could not make move");
         println!("{}", game);
     }
 }
@@ -265,26 +267,26 @@ fn find_mcts_action(game: &TicTacToeState) -> TicTacToeAction {
         .clone()
 }
 
-fn find_player_action(game: &TicTacToeState) -> TicTacToeAction {
-    use std::io;
+// fn find_player_action(game: &TicTacToeState) -> TicTacToeAction {
+//     use std::io;
 
-    let find = || {
-        let mut buffer = String::new();
-        println!("Please enter coordinations: x,y");
+//     let find = || {
+//         let mut buffer = String::new();
+//         println!("Please enter coordinations: x,y");
 
-        io::stdin().read_line(&mut buffer).unwrap();
+//         io::stdin().read_line(&mut buffer).unwrap();
 
-        let x: usize = buffer[0..1].parse().ok()?;
-        let y: usize = buffer[2..3].parse().ok()?;
+//         let x: usize = buffer[0..1].parse().ok()?;
+//         let y: usize = buffer[2..3].parse().ok()?;
 
-        Some(TicTacToeAction { x: x, y: y })
-    };
-    loop {
-        match find() {
-            Some(action) => {
-                break action;
-            }
-            None => {}
-        }
-    }
-}
+//         Some(TicTacToeAction { x: x, y: y })
+//     };
+//     loop {
+//         match find() {
+//             Some(action) => {
+//                 break action;
+//             }
+//             None => {}
+//         }
+//     }
+// }

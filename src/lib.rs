@@ -193,7 +193,7 @@ pub trait GameState: Clone {
 
     fn current_player(&self) -> Self::Player;
     fn available_moves(&self) -> Self::MoveList;
-    fn make_move(&mut self, mov: &Self::Move);
+    fn make_move(&mut self, mov: &Self::Move) -> Result<(), ()>;
     fn get_winner(&self) -> Option<Self::Player>;
     fn is_terminal(&self) -> bool {
         self.available_moves().into_iter().next().is_none()
@@ -395,8 +395,9 @@ where
         let mut states = vec![self.search_tree.root_state().clone()];
         for mov in moves {
             let mut state = states[states.len() - 1].clone();
-            state.make_move(&mov);
-            states.push(state);
+            if state.make_move(&mov).is_ok() {
+                states.push(state);
+            }
         }
         states
     }

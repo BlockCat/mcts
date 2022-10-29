@@ -261,7 +261,10 @@ impl<Spec: MCTS> SearchTree<Spec> {
             assert!(path.len() <= self.manager.max_playout_length(),
                 "playout length exceeded maximum of {} (maybe the transposition table is creating an infinite loop?)",
                 self.manager.max_playout_length());
-            state.make_move(&choice.mov);
+            if state.make_move(&choice.mov).is_err() {
+                break;
+            }
+
             let (new_node, new_did_we_create) = self.descend(&state, choice, node, tld);
             node = new_node;
             did_we_create = new_did_we_create;
@@ -575,8 +578,7 @@ impl NodeStats {
     }
     fn up<Spec: MCTS>(&self, manager: &Spec, evaln: f64) {
         let delta = evaln + manager.virtual_loss();
-        self.sum_evaluations
-            .fetch_add(delta, Ordering::Relaxed);
+        self.sum_evaluations.fetch_add(delta, Ordering::Relaxed);
     }
     fn replace(&self, other: &NodeStats) {
         self.visits
